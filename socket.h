@@ -1,0 +1,1 @@
+void send_helper(int idf, char* msg, int relogio);
