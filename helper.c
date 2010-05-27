@@ -10,6 +10,7 @@
 #include <pthread.h>
 
 #include "helper_sock.h"
+#include "fila.h"
 
 void DieWithError(char *errorMessage);
 
@@ -34,7 +35,7 @@ char msg[255];
 
 void *socket_interno(void *arg)
 {
-	cria_socket_interno();		
+	cria_socket_interno();
 }
 
 void *socket_externo(void *arg)
@@ -44,19 +45,19 @@ void *socket_externo(void *arg)
 
 int main(int argc, char *argv[])
 {
-    pthread_t extSocket, intSocket;
-    
-    /* checagem de parametros */
-    if (argc != 2) {
-        fprintf(stderr, "%s <porta_externa>\n", argv[0]);
-        exit(1);
-    }
-    
-    numeroPortaExterna = atoi (argv[1]);
-    
-    pthread_create(&intSocket, NULL, (void *)socket_interno, (void *) NULL);
-    pthread_create(&extSocket, NULL, (void *)socket_externo, (void *) NULL);
+	pthread_t extSocket, intSocket;
 
-    pthread_join(extSocket, NULL);
-    pthread_join(intSocket, NULL);
+	/* checagem de parametros */
+	if (argc != 2) {
+		fprintf(stderr, "%s <porta_externa>\n", argv[0]);
+		exit(1);
+	}
+
+	numeroPortaExterna = atoi (argv[1]);
+
+	pthread_create(&intSocket, NULL, (void *)socket_interno, (void *) NULL);
+	pthread_create(&extSocket, NULL, (void *)socket_externo, (void *) NULL);
+
+	pthread_join(extSocket, NULL);
+	pthread_join(intSocket, NULL);
 }
