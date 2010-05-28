@@ -37,14 +37,12 @@ char msg[255];
 void *socket_interno(int *vetorPortas)
 {
 	cria_socket_interno(vetorPortas);
-//	sleep(1);
 }
 
 void *socket_externo(int *vetorPortas)
 {
 
 	cria_socket_externo(vetorPortas);
-// 	sleep(1);
 }
 
 int main(int argc, char *argv[])

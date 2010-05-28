@@ -44,6 +44,10 @@ void cria_socket_interno(int *vetorPortas)
 		exit(1);
 	}
 	//printf("listen interno feito...\n");
+
+	//Criacao da fila de mensagens
+	fila *q_int;
+	q_int = criaFila();
 	
 	//Criacao da fila de mensagens/*
 // 	fila *q_int;
@@ -72,6 +76,7 @@ void cria_socket_interno(int *vetorPortas)
 			sscanf(str,"%d %s %d",&idf,msg,&rel);
 			//printf("%d,%s,%d\n",idf,msg,rel);
 			mens_int = criarInfo(idf, msg, rel);
+
 			cria_cliente(vetorPortas[0], str);
 			//switch de tipo de msg
 			//if(!strcmp(mens_int->msg, "reqP")){
