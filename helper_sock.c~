@@ -175,16 +175,15 @@ void cria_socket_externo(int *vetorPortas) {
 			printf("Vou tentar inserir %s\n", mens_ext->msg);
 			insere(q_ext,mens_ext);
 			
-			printf("Inseri a mensagem %d %s %d\n", mens_ext->idf, mens_ext->msg, mens_ext->rel);
 			int k=1;
 // 			printf("primeira porta que eu vou mandar %d", vetorPortas[0]);
 			for(k = 1; k<NUM_PROCS; k++) {	
 				cria_cliente(vetorPortas[k],echoBuffer);
 			}
 		
-// 			printf("----fila----\n");
-// 			imprimeFila(q_ext);
-// 			printf("----fila----\n");
+			printf("----fila----\n");
+			imprimeFila(q_ext);
+			printf("----fila----\n");
 			
 		}
 		else if(!strcmp(mens_ext->msg, "reqP")) {
@@ -202,10 +201,9 @@ void cria_socket_externo(int *vetorPortas) {
 			sprintf(mens_ext->msg, "%s", "POP");
 			insere(q_ext,mens_ext);
 			
- 			printf("Inseri a mensagem %d %s %d\n", mens_ext->idf, mens_ext->msg, mens_ext->rel);
-//			printf("----fila----\n");
-// 			imprimeFila(q_ext);
-// 			printf("----fila----\n");
+			printf("----fila----\n");
+			imprimeFila(q_ext);
+			printf("----fila----\n");
 		     
 		     }
 		     else if(!strcmp(mens_ext->msg, "reqV")){
@@ -223,10 +221,9 @@ void cria_socket_externo(int *vetorPortas) {
 			    sprintf(mens_ext->msg, "%s", "VOP");
 			    insere(q_ext,mens_ext);    
 			    
- 			    printf("Inseri a mensagem %d %s %d\n", mens_ext->idf, mens_ext->msg, mens_ext->rel);			    
-			    //printf("----fila----\n");
-			    //imprimeFila(q_ext);
-			    //printf("----fila----\n");
+			    printf("----fila----\n");
+			    imprimeFila(q_ext);
+			    printf("----fila----\n");
 			  }
 			  else printf("sou externo %d, recebi ACK, faco o que?\n",echoServAddrExt.sin_port);
 		

@@ -51,7 +51,7 @@ void pedir(int idf)
    	if (send(cliSockInterno, str, strlen(str), 0) == -1) {
         	perror("send");
 	       	exit(1);
-	}
+	//}
 // 	if ((t=recv(cliSockInterno, str, 100, 0)) > 0) {
 // 		str[t] = '\0';
 // 	}

@@ -1,4 +1,4 @@
-#define NUM_PROCS 1 //numero de filosofos
+#define NUM_PROCS 2 //numero de filosofos
 
 //Variaveis do Socket Interno
 extern int servSockInterno, acceptSockInterno, len, t;

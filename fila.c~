@@ -69,7 +69,7 @@ void imprimeFila(fila *f){
 // 	inf *n;
 	nodo *q;
 
-// 	n = malloc(sizeof (inf));
+	n = malloc(sizeof (inf));
 	q = malloc(sizeof (nodo));
 
 	q = f->inicio;
