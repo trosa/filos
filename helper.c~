@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 {
 	pthread_t extSocket, intSocket;
 	int vetorPortas[NUM_PROCS];
-	int ident = atoi(argv[1]);
+	int idf = atoi(argv[1]);
 	
 	/* checagem de parametros */
 	if (argc != NUM_PROCS+1) {

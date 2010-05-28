@@ -16,7 +16,7 @@
 int relogio = 0;
 int cliSockInterno, t, len;
 struct sockaddr_un remote;
-char str[100];
+char msgBuf[100];
 
 void comer()
 {
@@ -44,26 +44,30 @@ void pedir(int idf)
 // 	}
 //
 	srand(time(NULL));
-	int idf_rand, rel_rand;
+	char *mess;
+	
+	int coisa = rand()%2;
+	if (coisa) 
+	  mess = "reqP";
+	else mess = "reqV";
+	
+	int idf_rand;
 	idf_rand = rand()%40;
-// 	rel_rand = rand()%10;
+	
 	relogio++;
-	sprintf(str, "%d %s %d", idf_rand,"reqP",relogio);
-	printf("Pedindo... %d %s %d\n",idf_rand, "reqP", rel_rand);
+	sprintf(msgBuf,"");
+	
+	sprintf(msgBuf, "%d %s %d", idf_rand,mess,relogio);
+	
+	printf("Pedindo... %d %s %d\n",idf_rand, mess, relogio);
 
-   	if (send(cliSockInterno, str, strlen(str), 0) == -1) {
+   	if (send(cliSockInterno, msgBuf, strlen(msgBuf), 0) == -1) {
         	perror("send");
 	       	exit(1);
 	}
 	
  	sleep(1);
 	
-	sprintf(str, "%d %s %d", idf_rand,"reqV",relogio);
-   	if (send(cliSockInterno, str, strlen(str), 0) == -1) {
-        	perror("send");
-	       	exit(1);
-	}
-
 // 	if ((t=recv(cliSockInterno, str, 100, 0)) > 0) {
 // 		str[t] = '\0';
 // 	}

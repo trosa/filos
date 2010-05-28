@@ -4,10 +4,13 @@
 	#define max( a, b ) ( ((a) > (b)) ? (a) : (b) )
 #endif
 
+#ifndef min
+	#define min( a, b ) ( ((a) > (b)) ? (b) : (a) )
+#endif
+
 //Variaveis do Socket Interno
 extern int servSockInterno, acceptSockInterno, len, t;
 extern struct sockaddr_un local, remote;
-extern char str[100];
 
 //Variaveis do Socket Externo
 extern void HandleTCPClient(int clntSockExt);
@@ -16,9 +19,9 @@ extern int clntSockExt;
 extern struct sockaddr_in echoServAddrExt;
 extern struct sockaddr_in echoClntAddrExt;
 extern unsigned int clntLen;
-extern char echoBuffer[100];
 extern int numeroPortaExterna;
 
 //Variaveis comuns
+extern int ident;
 extern int idf, rel;
 extern char msg[255];
