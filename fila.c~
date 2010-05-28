@@ -29,40 +29,40 @@ inf *criarInfo(int idf, char *msg, int rel)
 
 void insere(fila *f, inf *info)
 {
-	nodo *ins, *buf, *n;
-	ins = malloc(sizeof (nodo));
-	ins->info = info;
-	ins->prox = NULL;
-	if (f->inicio == NULL) f->inicio = ins;
-	else {
-		if (f->inicio->prox == NULL) { //se so tiver 1 elemento
-			if (ins->info->rel < f->inicio->info->rel) { //se o rel do ins for menor que o do elemento
-				buf = f->inicio;
-				f->inicio = ins; //coloca ins no comeco da fila
-				ins->prox = buf;
-			}
-			else { //se o rel do ins for maior que o do elemento
-				f->inicio->prox = ins;  //coloca ins depois do n
-				ins->prox = NULL;
-			}
-		}
-		else { //se tiver mais de 1 elemento
-			if (ins->info->rel < f->inicio->info->rel) { //se o rel do ins for menor que o do primeiro da fila
-				buf = f->inicio;
-				f->inicio = ins; //coloca o ins no come;o da fila
-				ins->prox = buf;
-			}
-			else {
-				n = f->inicio;
-				while ((n->prox != NULL) && (ins->info->rel > n->prox->info->rel)) { //enqto nao chegar no fim e rel do ins for menor que do proximo
-					n = n->prox; //vai percorrendo
-				} //qdo parar quer dizer que o rel do n eh o ultimo que eh menor que o de ins, o proximo vai ser maior, entao insiro depois de n
-				buf = n->prox;
-				n->prox = ins;
-				ins->prox = buf;
-			}
-		}
+  nodo *ini;
+  nodo *n;
+  nodo *buf;
+
+  ini = malloc(sizeof (nodo));
+  n = malloc(sizeof (nodo));
+
+  ini->info = info;
+  ini->prox = NULL;
+  
+  n = f->inicio;	
+
+  if (f->inicio == NULL) f->inicio = ini;
+    else
+    { 
+		if(ini->info->rel < f->inicio->info->rel)
+	 	{ // se o timestamp do que eu quero inserir for menor que o do primeiro da fila, então coloco o que eu quero inserir como primeiro da fila
+		ini->prox = f->inicio;
+		f->inicio = ini;
+	 	}
+    
+		else 
+		{
+			while(n->prox->info->rel < ini->info->rel)
+			{
+				n = n->prox;
+				
+			} //enqto o timestamp do elemento da lista for menor que o que eu quero inserir, percorro a lista 
+			buf = n->prox;
+			n->prox = ini;
+			ini->prox = buf;
+                }	
 	}
+    free(buf);
 }
 
 inf *retira(fila *f)

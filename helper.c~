@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 
 // 	numeroPortaExterna = atoi (argv[1]);
 
-	pthread_create(&intSocket, NULL, (void *)socket_interno, (int *) vetorPortas);
+	pthread_create(&intSocket, NULL, (void *)socket_interno, (void *) NULL);
 	pthread_create(&extSocket, NULL, (void *)socket_externo, (int *) vetorPortas);
 
 	pthread_join(extSocket, NULL);

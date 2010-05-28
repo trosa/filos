@@ -1,6 +1,6 @@
 all: helper logico
-helper: helper.c helper_sock.c fila.c criacliente.c
-	gcc -o helper helper.c helper_sock.c fila.c criacliente.c -lpthread
+helper: helper.c helper_sock.c fila.c
+	gcc -o helper helper.c helper_sock.c fila.c -lpthread
 logico: logico.c logico_sock.c 
 	gcc -o logico logico.c logico_sock.c -lpthread
 clean:

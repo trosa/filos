@@ -78,7 +78,7 @@ void cria_socket_interno(int *vetorPortas)
 			  int k;
 			  for(k=0; k<NUM_PROCS; k++){
 			    printf("Sou interno, recebi a mensagem do logico %s\n", str);
-			    //sprintf(str,"");
+			    sprintf(str,"");
 			    sprintf(str, "%d %s %d", idf, "POP", rel);
 // 			    printf("Sou interno, mandei %s para %d\n", str, vetorPortas[k]); 
 			    cria_cliente(vetorPortas[k], str);
@@ -88,7 +88,7 @@ void cria_socket_interno(int *vetorPortas)
 				int k;
 				for(k = 0; k<NUM_PROCS; k++) {
 					printf("Sou interno, recebi a mensagem do logico %s\n", str);
-					//sprintf(str,"");
+					sprintf(str,"");
 					sprintf(str, "%d %s %d", idf, "VOP", rel);
 					printf("Sou interno, mandei %s para %d\n",str, vetorPortas[k]); 
 					cria_cliente(vetorPortas[k], str);
