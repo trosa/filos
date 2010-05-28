@@ -55,7 +55,7 @@ void cria_socket_interno(int *vetorPortas)
 // 	fila *q_int;
 // 	q_int = criaFila();
 // 	*/
-	while(1){
+	do{
 		int done, n;
 
 		inf *mens_int;
@@ -69,7 +69,7 @@ void cria_socket_interno(int *vetorPortas)
 		}
 		printf("conectado interno!\n");
 		done = 0;
-		do{
+		while(1) {
 			n = recv(acceptSockInterno, str, 100, 0);
 			if (n<=0) {
 				if (n<0) perror("recv interno falhou");

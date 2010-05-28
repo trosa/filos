@@ -4,6 +4,10 @@
 	#define max( a, b ) ( ((a) > (b)) ? (a) : (b) )
 #endif
 
+#ifnef min
+	#define min( a, b ) ( ((a) < (b)) ? (a) : (b) )
+#endif
+
 //Variaveis do Socket Interno
 extern int servSockInterno, acceptSockInterno, len, t;
 extern struct sockaddr_un local, remote;

@@ -49,7 +49,7 @@ void pedir(int idf)
 // 	rel_rand = rand()%10;
 	relogio++;
 	sprintf(str, "%d %s %d", idf_rand,"reqP",relogio);
-	printf("Pedindo... %d %s %d\n",idf_rand, "reqP", relogio);
+	printf("Pedindo... %d %s %d\n",idf_rand, "reqP", rel_rand);
 
    	if (send(cliSockInterno, str, strlen(str), 0) == -1) {
         	perror("send");
