@@ -43,7 +43,7 @@ void pedir(int idf)
 	srand(time(NULL));
 	int idf_rand, rel_rand;
 	idf_rand = rand()%40;
-	rel_rand = rand()%20;
+	rel_rand = rand()%10;
 	sprintf(str, "%d %s %d", idf_rand,"reqP",rel_rand);
 	printf("Pedindo... %d %s %d\n",idf_rand, "reqP", rel_rand);
    	if (send(cliSockInterno, str, strlen(str), 0) == -1) {

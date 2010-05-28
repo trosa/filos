@@ -36,7 +36,8 @@ void insere(fila *f, inf *info)
 	if (f->inicio == NULL) f->inicio = ins;
 	else {
 		if (f->inicio->prox == NULL) { //se so tiver 1 elemento
-			if (ins->info->rel < f->inicio->info->rel) { //se o rel do ins for menor que o do elemento
+			if ((ins->info->rel < f->inicio->info->rel) || ((ins->info->rel == f->inicio->info->rel) && (ins->info->idf <= f->inicio->info->idf))){
+				//se o rel do ins for menor que o do elemento
 				buf = f->inicio;
 				f->inicio = ins; //coloca ins no comeco da fila
 				ins->prox = buf;
@@ -47,14 +48,15 @@ void insere(fila *f, inf *info)
 			}
 		}
 		else { //se tiver mais de 1 elemento
-			if (ins->info->rel < f->inicio->info->rel) { //se o rel do ins for menor que o do primeiro da fila
+			if ((ins->info->rel < f->inicio->info->rel) || ((ins->info->rel == f->inicio->info->rel) && (ins->info->idf <= f->inicio->info->idf))) {
+				//se o rel do ins for menor que o do primeiro da fila
 				buf = f->inicio;
 				f->inicio = ins; //coloca o ins no come;o da fila
 				ins->prox = buf;
 			}
 			else {
 				n = f->inicio;
-				while ((n->prox != NULL) && (ins->info->rel > n->prox->info->rel)) { //enqto nao chegar no fim e rel do ins for menor que do proximo
+				while ((n->prox != NULL) && ((ins->info->rel > n->prox->info->rel) || ((ins->info->rel == n->prox->info->rel) && (ins->info->idf > n->prox->info->idf)))) { //enqto nao chegar no fim e rel do ins for menor que do proximo
 					n = n->prox; //vai percorrendo
 				} //qdo parar quer dizer que o rel do n eh o ultimo que eh menor que o de ins, o proximo vai ser maior, entao insiro depois de n
 				buf = n->prox;
