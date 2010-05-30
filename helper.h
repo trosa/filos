@@ -1,4 +1,9 @@
-#define NUM_PROCS 1 //numero de filosofos
+#define NUM_PROCS 2 //numero de filosofos
+#define ACK 0
+#define REQP 1
+#define REQV 2
+#define POP 3
+#define VOP 4
 
 #ifndef max
 	#define max( a, b ) ( ((a) > (b)) ? (a) : (b) )
@@ -23,5 +28,5 @@ extern int numeroPortaExterna;
 
 //Variaveis comuns
 extern int ident;
-extern int idf, rel;
-extern char msg[255];
+extern int idf, rel, msg;
+

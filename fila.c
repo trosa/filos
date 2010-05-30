@@ -1,9 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "helper.h"
+
 typedef struct inf{
 	int idf;
-	char *msg;
+	int msg;
 	int rel;
 } inf;
 
@@ -17,7 +19,7 @@ typedef struct{
 	nodo *fim;
 } fila;
 
-inf *criarInfo(int idf, char *msg, int rel)
+inf *criarInfo(int idf, int msg, int rel)
 {
 	inf *info;
 	info = malloc(sizeof(info));
@@ -77,7 +79,7 @@ inf *retira(fila *f)
 	{
 		printf("Erro: a fila esta vazia");
 		return NULL;
-	}
+	} 
 	result = ini->info;
 	f->inicio = ini->prox;
 	free(ini);
@@ -107,7 +109,12 @@ void imprimeFila(fila *f){
 	{
 // 		n = q->info;
 		printf("%d ",q->info->idf);
-		printf("%s ",q->info->msg);
+		
+		if (q->info->msg == 3)
+		  printf("POP ");
+		else if (q->info->msg == 4)
+		  printf("VOP ");
+		
 		printf("%d\n",q->info->rel);
 		q = q->prox;
 	} while(q != NULL);

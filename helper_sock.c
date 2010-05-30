@@ -8,92 +8,46 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <pthread.h>
+#include <sys/stat.h>
+#include <linux/stat.h>
 
 #include "helper.h"
 #include "helper_sock.h"
 #include "fila.h"
 #include "criacliente.h"
 
+#define FIFO_FILE "MYFIFO"
+
 int relogio=0, sem=0;
 char str[255], echoBuffer[255];
 
 void cria_socket_interno(int *vetorPortas)
 {
+	FILE *fp;
+	char readBuf[100]; char testeBuf[100];
 
-	/*Criacao do socket UNIX para receber conexoes*/
-	if ((servSockInterno = socket(AF_UNIX, SOCK_STREAM, 0))<0)
-	{
-		perror ("criar socket interno falhou");
-		exit(1);
-	}
+	umask(0);
+	mknod(FIFO_FILE, S_IFIFO|0666, 0);
 
-	/*bind do socket descriptor para um endereco no Unix*/
-	local.sun_family = AF_UNIX;
-	strcpy(local.sun_path,"echo_socket");
-	unlink(local.sun_path);
-	len = strlen(local.sun_path) + sizeof(local.sun_family);
-	if ((bind(servSockInterno, (struct sockaddr *)&local, len))<0)
-	{
-		perror("bind socket interno falhou");
-		exit(1);
-	}
+	while(1) {
+		//atualiza relógio logico
+		relogio++;
+		rel = max(relogio, rel);
 
-	/*Escutar requisicoes*/
-	if ((listen(servSockInterno, 5))<0)
-	{
-		perror("listen socket interno falhou");
-		exit(1);
-	}
-
-	while(1){
-		int done, n;
-
-		inf *mens_int;
-		sprintf(str,"");
-
-		printf("esperando conexao interna...\n");
-		t = sizeof(remote);
-		if ((acceptSockInterno = accept(servSockInterno, (struct sockaddr* )&remote, &t))<0)
-		{
-			perror("accept socket interno falhou");
-			exit(1);
-		}
-		printf("conectado interno!\n");
-		done = 0;
-		do{
-			sprintf(str,"");
-			printf("Interno, Buffer antes do recv %s\n", str);
-			n = recv(acceptSockInterno, str, sizeof(str), 0);
-			if (n<=0) {
-				if (n<0) perror("recv interno falhou");
-				done = 1;
-			}
-			
-			printf("Interno, Buffer depois do recv %s\n", str);
-			sscanf(str,"%d %s %d",&idf,msg,&rel);	
-			
-			//atualiza relógio logico
-			relogio++;
-			rel = max(relogio, rel);
-			
-			sleep(1);
-			sprintf(str,"");
-			sprintf(str,"%d %s %d",idf,msg,rel);
-			
-			printf("Sou interno e vou mandar essa mensagem para o externo %s\n", str);
-			cria_cliente(vetorPortas[0], str);
-			
-			if (!done)
-				if (send(acceptSockInterno, str, n, 0) < 0)
-				{
-					perror("send interno falhou");
-					done = 1;
+		strcpy(testeBuf, readBuf);
+	
+		fp = fopen(FIFO_FILE, "r");
+		fgets(readBuf, 80, fp);
+		while(!strcmp(testeBuf,readBuf)) {
+				fclose(fp);
+				fp = fopen(FIFO_FILE, "r");
+				fgets(readBuf, 80, fp);
 				}
-		}while (!done);
-		
-		close(acceptSockInterno);
+		fclose(fp);
+
+		//printf("Sou interno e vou mandar essa mensagem para o externo %s\n", str);
+		cria_cliente(vetorPortas[0], readBuf);
 	}
-					
 }
 
 void limpaFila(fila *f)
@@ -107,7 +61,7 @@ void limpaFila(fila *f)
 	
 	nodo *no;
 	no = malloc(sizeof(nodo));
-	no = q_ext->inicio;
+	no = f->inicio;
 	
 	inf *lixo;
 	lixo = malloc(sizeof(inf));
@@ -130,11 +84,11 @@ void limpaFila(fila *f)
 	while(no->prox != NULL){
 	  if (no->info->rel < menor){
 	    
-	    if (!(strcmp(no->info->msg,"VOP"))){
+	    if (no->info->msg == VOP){
 	      lixo = retira(f);
 	      sem++;
 	    }
-	    else if (!(strcmp(no->info->msg,"POP"))){
+	    else if (no->info->msg == POP){
 	      if (sem>0){
 		sem--;
 		//se no->info->idf == ident  mando msg de retorno (GO)
@@ -196,13 +150,18 @@ void cria_socket_externo(int *vetorPortas) {
 			exit(1);
 		}
 		
-		printf("Tratando cliente %s\n", inet_ntoa(echoClntAddrExt.sin_addr));
+		//printf("Tratando cliente %s\n", inet_ntoa(echoClntAddrExt.sin_addr));
 		recv(clntSockExt, echoBuffer, sizeof(echoBuffer), 0);
 				
-		sscanf(echoBuffer,"%d %s %d",&idf,msg,&rel);
-		printf("Sou externo e recebi essa msg do interno %s\n",echoBuffer);
+		sscanf(echoBuffer,"%d %d %d",&idf,&msg,&rel);
+		
+		//printf("Sou externo e fiz o sscanf %d %d %d\n", idf, msg, rel);
+
+// 		printf("Sou externo e recebi essa msg do interno %s\n",echoBuffer);
 		mens_ext = criarInfo(idf, msg, rel);
 		sleep(1);
+		
+ 		//printf("Sou externo e criei o info %d %d %d\n",mens_ext->idf, mens_ext->msg, mens_ext->rel);
 		
 		//atualiza o relogio
 		relogio++;
@@ -210,16 +169,16 @@ void cria_socket_externo(int *vetorPortas) {
 		mens_ext->rel = rel;
 		
 		//switch de tipo de msg
-		if((!strcmp(mens_ext->msg, "POP")) || (!strcmp(mens_ext->msg, "VOP"))) {
+		if((mens_ext->msg == POP) || (mens_ext->msg == VOP)) {
 			
 			//Insere o nodo na fila de requisicoes
 			insere(q_ext,mens_ext);
-			printf("Sou externo e vou inserir essa mensagem na fila %d %s %d\n", mens_ext->idf, mens_ext->msg, mens_ext->rel);
+// 			printf("Sou externo e vou inserir essa mensagem na fila %d %s %d\n", mens_ext->idf, mens_ext->msg, mens_ext->rel);
 			
 			//Broadcast para todos os outros
 			sprintf(echoBuffer,"");
-			sprintf(echoBuffer,"%d %s %d",idf,"ACK",rel);
-			printf("Sou externo e vou fazer broadcast dessa mensagem %s\n",echoBuffer);
+			sprintf(echoBuffer,"%d %d %d",idf,ACK,rel);
+// 			printf("Sou externo e vou fazer broadcast dessa mensagem %s\n",echoBuffer);
 			
 			sleep(1);
 			int k=1;
@@ -233,22 +192,22 @@ void cria_socket_externo(int *vetorPortas) {
 			mens_ext->rel=rel;
 			
 			//Teste de verificacao da fila
-// 			printf("----fila----\n");
-// 			imprimeFila(q_ext);
-// 			printf("----fila----\n");
+			printf("----fila----\n");
+			imprimeFila(q_ext);
+			printf("----fila----\n");
 			
 		}
-		else if(!strcmp(mens_ext->msg, "reqP")) {
+		else if(mens_ext->msg == REQP) {
 			
 			//Insere o nodo na fila de requisicoes
-			//sprintf(mens_ext->msg, "%s", "POP");
-			//insere(q_ext,mens_ext);
-			//printf("Sou externo e vou inserir essa mensagem na fila %d %s %d\n", mens_ext->idf, mens_ext->msg, mens_ext->rel);
+			mens_ext->msg = POP;
+			insere(q_ext,mens_ext);
+			//printf("Sou externo e vou inserir essa mensagem na fila %d %d %d\n", mens_ext->idf, mens_ext->msg, mens_ext->rel);
 			
 			//Broadcast para todos os outros
 			sprintf(echoBuffer,"");
-			sprintf(echoBuffer,"%d %s %d",idf,"POP",rel);
-			printf("Sou externo e vou fazer broadcast dessa mensagem %s\n",echoBuffer);
+			sprintf(echoBuffer,"%d %d %d",idf,POP,rel);
+// 			printf("Sou externo e vou fazer broadcast dessa mensagem %s\n",echoBuffer);
 			
 			sleep(1);
 			int k;
@@ -262,23 +221,23 @@ void cria_socket_externo(int *vetorPortas) {
 			mens_ext->rel=rel;
 			
 			//Teste de verificacao da fila
-// 			printf("----fila----\n");
-// 			imprimeFila(q_ext);
-// 			printf("----fila----\n");
+			printf("----fila----\n");
+			imprimeFila(q_ext);
+			printf("----fila----\n");
 		     
 		     }
-		     else if(!strcmp(mens_ext->msg, "reqV")){
+		     else if(mens_ext->msg == REQV){
 			    
 			    
 		            //Insere o nodo na fila de requisicoes
-			    //sprintf(mens_ext->msg, "%s", "VOP");
-			    //insere(q_ext,mens_ext);
-			    //printf("Sou externo e vou inserir essa mensagem na fila %d %s %d\n", mens_ext->idf, mens_ext->msg, mens_ext->rel);
+			    mens_ext->msg = VOP;
+			    insere(q_ext,mens_ext);
+			    //printf("Sou externo e vou inserir essa mensagem na fila %d %d %d\n", mens_ext->idf, mens_ext->msg, mens_ext->rel);
 			    
 			    //Broadcast para todos os outros
 			    sprintf(echoBuffer,"");
-			    sprintf(echoBuffer,"%d %s %d",idf,"VOP",rel);
-			    printf("Sou externo e vou fazer broadcast dessa mensagem %s\n",echoBuffer);
+			    sprintf(echoBuffer,"%d %d %d",idf,VOP,rel);
+// 			    printf("Sou externo e vou fazer broadcast dessa mensagem %s\n",echoBuffer);
 			    
 			    sleep(1);
 			    int k;
@@ -292,14 +251,14 @@ void cria_socket_externo(int *vetorPortas) {
 			    mens_ext->rel=rel;
 			
 			    //Teste de verificacao da fila
-// 			    printf("----fila----\n");
-// 			    imprimeFila(q_ext);
-// 			    printf("----fila----\n");
+			    printf("----fila----\n");
+			    imprimeFila(q_ext);
+			    printf("----fila----\n");
 			  }
 			  else 
 			  {
-			      
-			      
+			      //limpaFila(q_ext);
+			      //printf("Sou externo Recebi %s\n", echoBuffer);
 			      
 			  };
 		

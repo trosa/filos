@@ -14,7 +14,7 @@ void cria_cliente(int numeroPorta, char *mensagem) {
     struct sockaddr_in echoServAddr;
     char enderecoIPServidor[100];
 
-    printf("vou criar cliente pra %d com msg %s\n",numeroPorta, mensagem);
+    //printf("vou criar cliente pra %d com msg %s\n",numeroPorta, mensagem);
 
     strcpy (enderecoIPServidor, "127.0.0.1");
 

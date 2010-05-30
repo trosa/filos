@@ -31,8 +31,8 @@ char echoBuffer[100];
 int numeroPortaExterna;
 
 //Variaveis comuns
-int idf, rel;
-char msg[255];
+int idf, rel, msg;
+
 
 void *socket_interno(int *vetorPortas)
 {
@@ -49,7 +49,6 @@ int main(int argc, char *argv[])
 {
 	pthread_t extSocket, intSocket;
 	int vetorPortas[NUM_PROCS];
-	int ident = atoi(argv[1]);
 	
 	/* checagem de parametros */
 	if (argc != NUM_PROCS+1) {
@@ -60,8 +59,8 @@ int main(int argc, char *argv[])
 	//Inicializa o vetor de portas
 	int i;
 	
-	for(i=1; i<NUM_PROCS; i++){
-	  vetorPortas[i-1] = atoi(argv[i+1]);
+	for(i=0; i<NUM_PROCS; i++){
+	  vetorPortas[i] = atoi(argv[i+1]);
 	}
 
 // 	numeroPortaExterna = atoi (argv[1]);
