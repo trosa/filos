@@ -17,8 +17,11 @@
 #include "criacliente.h"
 
 #define FIFO_FILE "MYFIFO"
+#define GO_FILE "GOFIFO"
 
-int relogio=0, sem=0;
+int relogio=0;
+int sem[NUM_PROCS];
+int meu_idf;
 char str[255], echoBuffer[255];
 
 void cria_socket_interno(int *vetorPortas)
@@ -29,10 +32,9 @@ void cria_socket_interno(int *vetorPortas)
 	umask(0);
 	mknod(FIFO_FILE, S_IFIFO|0666, 0);
 
+	relogio++;
+
 	while(1) {
-		//atualiza relógio logico
-		relogio++;
-		rel = max(relogio, rel);
 
 		strcpy(testeBuf, readBuf);
 	
@@ -45,7 +47,7 @@ void cria_socket_interno(int *vetorPortas)
 				}
 		fclose(fp);
 
-		//printf("Sou interno e vou mandar essa mensagem para o externo %s\n", str);
+		printf("Sou interno e vou mandar essa mensagem para o externo %s\n", readBuf);
 		cria_cliente(vetorPortas[0], readBuf);
 	}
 }
@@ -53,12 +55,15 @@ void cria_socket_interno(int *vetorPortas)
 void limpaFila(fila *f)
 {
 	int maiores[NUM_PROCS];
-	int p, menor;
+	int p, menor=99999;
+	
+	imprimeFila(f);
 	
 	for (p=0; p<NUM_PROCS; p++){
 	  maiores[p] = 0;
 	}
 	
+	//ponteiro que irá percorrer a lista
 	nodo *no;
 	no = malloc(sizeof(nodo));
 	no = f->inicio;
@@ -67,36 +72,94 @@ void limpaFila(fila *f)
 	lixo = malloc(sizeof(inf));
 	
 	//Preencho o vetor com os maiores timestamps de cada filosofo
-	while(no->prox != NULL){
+	while(no != NULL){
+	printf("Estou verificando a seguinte requisicao: %d %d %d %d\n", no->info->garfo, no->info->idf, no->info->msg, no->info->rel);
 	  if (no->info->rel > maiores[no->info->idf]){
 	    maiores[no->info->idf] = no->info->rel;
 	  }
 	  no = no->prox;
+	  printf("MAIORES: ");
+	  for (p=0; p<NUM_PROCS; p++)
+	    if (maiores[p] != 0)
+	      printf("%d ", maiores[p]);
+	  printf("\n");
 	}
-	
+
 	//Encontro o menor timestamp entre os maiores valores dos filosofos
-	for (p=0; p<NUM_PROCS; p++){
-	  if (menor > maiores[p])
-	    menor = maiores[p];
-	}
+ 	for (p=0; p<NUM_PROCS; p++){
+	  if (maiores[p] != 0)
+	    if (menor > maiores[p])
+	      menor = maiores[p];
+ 	}
+ 	printf("MENOR: %d\n", menor);
+	
 	
 	//Percorro a fila retirando 
-	while(no->prox != NULL){
+	no = f->inicio;
+
+//REMOVER ISSO
+
+	FILE *fg;
+
+		if ((fg = fopen(GO_FILE,"w")) == NULL) {
+			perror("fopen nao deu");
+		}
+
+		char goBuf[100];
+		sprintf(goBuf,"%d",relogio);
+		
+		fputs(goBuf, fg);
+
+	fclose(fg);
+
+//REMOVER ISSO!
+	
+		while(no != NULL){
 	  if (no->info->rel < menor){
-	    
+// 	    printf("NO: %d %d %d\n", no->info->idf, no->info->msg, no->info->rel);
 	    if (no->info->msg == VOP){
 	      lixo = retira(f);
-	      sem++;
-	    }
+ 	      printf("Estou retirando: %d %d %d %d\n", lixo->garfo, lixo->idf, lixo->msg, lixo->rel);
+	      sem[lixo->garfo]++;
+
+				int h;
+				printf("garfos: ");
+				for(h=0;h<NUM_PROCS;h++) {
+					printf("%d ", sem[h]);
+	    	}
+				printf("\n");
+			}
 	    else if (no->info->msg == POP){
-	      if (sem>0){
-		sem--;
-		//se no->info->idf == ident  mando msg de retorno (GO)
+	      if (sem[no->info->garfo]>0){
+				lixo = retira(f);
+ 				printf("Estou retirando: %d %d %d %d\n", lixo->garfo, lixo->idf, lixo->msg, lixo->rel);
+				sem[lixo->garfo]--;
+
+				int h;
+				printf("garfos: ");
+				for(h=0;h<NUM_PROCS;h++) {
+					printf("%d ", sem[h]);
+	    	}
+				printf("\n");
+
+				FILE *fg;
+
+				if ((fg = fopen(GO_FILE,"w")) == NULL) {
+					perror("fopen nao deu");
+				}
+				
+				char goBuf[100];
+				sprintf(goBuf,"%d",relogio);
+				fputs(goBuf, fg);
+
+				fclose(fg);
+
 	      }
 	    }
 	  }
 	  no = no->prox;
 	}
+
 	free(no);
 	free(lixo);
 }	
@@ -136,6 +199,12 @@ void cria_socket_externo(int *vetorPortas) {
 	fila *q_ext;
 	q_ext = criaFila();
 
+	//Inicializa vetor de semaforos
+	int z;
+	for(z=0;z<NUM_PROCS;z++) {
+		sem[z] = 1;
+	}
+
 	//Esperando conexoes com accept
 	while(1) {
 		
@@ -153,21 +222,21 @@ void cria_socket_externo(int *vetorPortas) {
 		//printf("Tratando cliente %s\n", inet_ntoa(echoClntAddrExt.sin_addr));
 		recv(clntSockExt, echoBuffer, sizeof(echoBuffer), 0);
 				
-		sscanf(echoBuffer,"%d %d %d",&idf,&msg,&rel);
+		sscanf(echoBuffer,"%d %d %d %d",&garfo,&idf,&msg,&rel);
 		
-		//printf("Sou externo e fiz o sscanf %d %d %d\n", idf, msg, rel);
+		//printf("Sou externo e fiz o sscanf %d %d %d %d\n", garfo, idf, msg, rel);
 
-// 		printf("Sou externo e recebi essa msg do interno %s\n",echoBuffer);
-		mens_ext = criarInfo(idf, msg, rel);
+//	printf("Sou externo e recebi essa msg do interno %s\n",echoBuffer);
+		mens_ext = criarInfo(garfo, idf, msg, rel);
 		sleep(1);
 		
- 		//printf("Sou externo e criei o info %d %d %d\n",mens_ext->idf, mens_ext->msg, mens_ext->rel);
+// 		printf("Sou externo e criei o info %d %d %d %d\n",mens_ext->garfo,mens_ext->idf, mens_ext->msg, mens_ext->rel);
 		
 		//atualiza o relogio
 		relogio++;
 		rel = max(relogio, rel);
 		mens_ext->rel = rel;
-		
+
 		//switch de tipo de msg
 		if((mens_ext->msg == POP) || (mens_ext->msg == VOP)) {
 			
@@ -177,8 +246,8 @@ void cria_socket_externo(int *vetorPortas) {
 			
 			//Broadcast para todos os outros
 			sprintf(echoBuffer,"");
-			sprintf(echoBuffer,"%d %d %d",idf,ACK,rel);
-// 			printf("Sou externo e vou fazer broadcast dessa mensagem %s\n",echoBuffer);
+			sprintf(echoBuffer,"%d %d %d %d",garfo,idf,ACK,rel);
+//			printf("Sou externo e vou fazer broadcast dessa mensagem %s\n",echoBuffer);
 			
 			sleep(1);
 			int k=1;
@@ -192,21 +261,21 @@ void cria_socket_externo(int *vetorPortas) {
 			mens_ext->rel=rel;
 			
 			//Teste de verificacao da fila
-			printf("----fila----\n");
-			imprimeFila(q_ext);
-			printf("----fila----\n");
+// 			printf("----fila----\n");
+// 			imprimeFila(q_ext);
+// 			printf("----fila----\n");
 			
 		}
 		else if(mens_ext->msg == REQP) {
-			
 			//Insere o nodo na fila de requisicoes
 			mens_ext->msg = POP;
 			insere(q_ext,mens_ext);
+			printf("CHEGOU!\n");
 			//printf("Sou externo e vou inserir essa mensagem na fila %d %d %d\n", mens_ext->idf, mens_ext->msg, mens_ext->rel);
 			
 			//Broadcast para todos os outros
 			sprintf(echoBuffer,"");
-			sprintf(echoBuffer,"%d %d %d",idf,POP,rel);
+			sprintf(echoBuffer,"%d %d %d %d",garfo,idf,POP,rel);
 // 			printf("Sou externo e vou fazer broadcast dessa mensagem %s\n",echoBuffer);
 			
 			sleep(1);
@@ -221,9 +290,9 @@ void cria_socket_externo(int *vetorPortas) {
 			mens_ext->rel=rel;
 			
 			//Teste de verificacao da fila
-			printf("----fila----\n");
-			imprimeFila(q_ext);
-			printf("----fila----\n");
+// 			printf("----fila----\n");
+// 			imprimeFila(q_ext);
+// 			printf("----fila----\n");
 		     
 		     }
 		     else if(mens_ext->msg == REQV){
@@ -236,7 +305,7 @@ void cria_socket_externo(int *vetorPortas) {
 			    
 			    //Broadcast para todos os outros
 			    sprintf(echoBuffer,"");
-			    sprintf(echoBuffer,"%d %d %d",idf,VOP,rel);
+			    sprintf(echoBuffer,"%d %d %d %d",garfo,idf,VOP,rel);
 // 			    printf("Sou externo e vou fazer broadcast dessa mensagem %s\n",echoBuffer);
 			    
 			    sleep(1);
@@ -251,14 +320,14 @@ void cria_socket_externo(int *vetorPortas) {
 			    mens_ext->rel=rel;
 			
 			    //Teste de verificacao da fila
-			    printf("----fila----\n");
-			    imprimeFila(q_ext);
-			    printf("----fila----\n");
+// 			    printf("----fila----\n");
+// 			    imprimeFila(q_ext);
+// 			    printf("----fila----\n");
 			  }
 			  else 
 			  {
-			      //limpaFila(q_ext);
-			      //printf("Sou externo Recebi %s\n", echoBuffer);
+			    printf("Recebi ACK!\n");  
+			    limpaFila(q_ext);
 			      
 			  };
 		

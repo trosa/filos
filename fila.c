@@ -4,6 +4,7 @@
 #include "helper.h"
 
 typedef struct inf{
+	int garfo;
 	int idf;
 	int msg;
 	int rel;
@@ -19,10 +20,11 @@ typedef struct{
 	nodo *fim;
 } fila;
 
-inf *criarInfo(int idf, int msg, int rel)
+inf *criarInfo(int garfo, int idf, int msg, int rel)
 {
 	inf *info;
-	info = malloc(sizeof(info));
+	info = malloc(sizeof(inf));
+	info->garfo = garfo;
 	info->idf = idf;
 	info->msg = msg;
 	info->rel = rel;
@@ -108,6 +110,7 @@ void imprimeFila(fila *f){
 	do
 	{
 // 		n = q->info;
+		printf("%d ",q->info->garfo);
 		printf("%d ",q->info->idf);
 		
 		if (q->info->msg == 3)

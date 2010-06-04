@@ -9,93 +9,115 @@
 #include <unistd.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <sys/stat.h>
+#include <linux/stat.h>
 
 #include "helper.h" //Num procs + MAX
 
 #define FIFO_FILE "MYFIFO"
+#define GO_FILE "GOFIFO"
 
 int relogio = 0;
 int cliSockInterno, t, len;
 struct sockaddr_un remote;
 char msgBuf[100];
 
-void comer()
+void comer(int idf)
 {
-	printf("Comendo...\n");
+	printf("(%d, %d) EATING\n",idf,relogio);
 	relogio++;
 	srand(time(NULL));
 	int num = (rand()%5)+1; 
 	sleep(num); 
 }
 
-void pensar()	
+void pensar(int idf)
 {
-	printf("Pensando...\n");
+	printf("(%d, %d) THINKING\n",idf,relogio);
 	relogio++;
 	srand(time(NULL));
 	sleep((rand()%5)+1); 
 }
 
-void pedir(int idf)
+void pedir(int idf, int garfo, int eh_vop)
 {
-// 	sprintf(str, "%d %s %d", idf,"reqP",2);
-//    	if (send(cliSockInterno, str, strlen(str), 0) == -1) {
-//         	perror("send");
-// 	       	exit(1);
-// 	}
-//
-	srand(time(NULL));
+	
+
 	int mess;
-	
-	int coisa = rand()%2;
-	if (coisa) 
-	  mess = REQP;
-	else mess = REQV;
-	
-	int idf_rand;
-	idf_rand = rand()%40;
-	
 	relogio++;
-	sprintf(msgBuf,"");
-	sprintf(msgBuf, "%d %d %d", idf_rand,mess,relogio);
-	
-	printf("Pedindo... %d %d %d\n",idf_rand, mess, relogio);
 	
 	FILE *fp;
-
+	
 	if ((fp = fopen(FIFO_FILE,"w")) == NULL) {
 		perror("fopen nao deu");
 	}
+	
+	if(eh_vop) {
+		sprintf(msgBuf,"");
+		sprintf(msgBuf, "%d %d %d %d",garfo,idf,REQV,relogio);
+		fputs(msgBuf, fp);
+		fclose(fp);
+		return;
+	}
 
+	sprintf(msgBuf,"");
+	sprintf(msgBuf, "%d %d %d %d",garfo,idf,REQP,relogio);
 	fputs(msgBuf, fp);
 
 	fclose(fp);
 
-	//fp = fopen(FIFO_FILE,"w");
-	//fclose(fp);
+	//FIFO DE ESPERA
+	FILE *fg;
 	
- 	sleep(1);
+	char goBuf[100]; char goTesteBuf[100];
+
+	umask(0);
+	mknod(GO_FILE, S_IFIFO|0666, 0);
+
+	strcpy(goBuf, goTesteBuf);
+	fg = fopen(GO_FILE, "r");
+	fgets(goBuf, 80, fg);
+	while(!strcmp(goTesteBuf,goBuf)) {
+			fclose(fg);
+			fg = fopen(GO_FILE, "r");
+			fgets(goBuf, 80, fg);
+	}
+	fclose(fg);
+
+	int rel_temp;
+	sscanf(goBuf,"%d",&rel_temp);
+	relogio = max(rel_temp,relogio);
+
+	sleep(1);
 	
-// 	if ((t=recv(cliSockInterno, str, 100, 0)) > 0) {
-// 		str[t] = '\0';
-// 	}
-// 	else {
-// 	       	if (t < 0) perror("recv");
-// 	        else printf("Server closed connection\n");
-// 	       	exit(1);
-// 	}
 }
 
 void *filosofo(int *num_idf)
 {
 	int idf = (int *)num_idf;
+	
+	//int right = (idf+NUM_PROCS-1)%NUM_PROCS;
+	//int left = (idf+1)%NUM_PROCS;
+	int right = 0;
+	int left = 1;
+	
 	while(1)
 	{
-		printf("Thread: %d\n", idf);
-       		comer();
-		pensar();
-		pedir(idf);
-  	}
+		printf("(%d, %d) HUNGRY\n",idf,relogio);
+		if (idf != NUM_PROCS) {
+			pedir(idf,left,0);
+			pedir(idf,right,0);
+		}
+		else {
+			pedir(idf,right,0);
+			pedir(idf,left,0);
+		}
+    comer(idf);
+		pedir(idf,left,1);
+		sleep(2);
+		pedir(idf,right,1);
+		pensar(idf);
+  }
 }
 
 int main(int argc, char *argv[])

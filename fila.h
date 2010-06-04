@@ -1,4 +1,5 @@
 typedef struct inf{
+	int garfo;
 	int idf;
 	int msg;
 	int rel;
@@ -15,7 +16,7 @@ typedef struct{
 } fila;
 
 //Costrutores
-inf *criarInfo(int idf,int msg, int rel);
+inf *criarInfo(int garfo, int idf,int msg, int rel);
 fila *criaFila(void);
 
 //Ferramentas de Manipulacao da fila

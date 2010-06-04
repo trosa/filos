@@ -28,5 +28,5 @@ extern int numeroPortaExterna;
 
 //Variaveis comuns
 extern int ident;
-extern int idf, rel, msg;
-
+extern int garfo, idf, rel, msg;
+extern int meu_idf;
